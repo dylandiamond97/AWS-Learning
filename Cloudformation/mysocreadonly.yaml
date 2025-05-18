@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create an IAM role in all child accounts of a ControlTower OU
+
+Parameters:
+  RoleName:
+    Type: String
+    Description: Name of the IAM role to be created
+    Default: CentralAccessRole
+
+  AllowedPrincipal:
+    Type: String
+    Description: ARN of the AWS principal (e.g., an IAM role or user) allowed to assume this role
+    Default: arn:aws:sso:::group/14d874a8-6001-708c-6e8a-b26457215f58
+
+  ManagedPolicyArn:
+    Type: String
+    Description: ARN of the managed policy to attach to the role
+    Default: arn:aws:iam::aws:policy/ReadOnlyAccess
+
+Resources:
+  IAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref AllowedPrincipal
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref ManagedPolicyArn
+
+Outputs:
+  RoleArn:
+    Description: ARN of the created IAM role
+    Value: !GetAtt IAMRole.Arn

@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create IAM Role soc-support-readonly in all accounts with cross-account access via IAM Identity Center.
+
+Resources:
+  SocSupportReadonlyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: soc-support-readonly
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: arn:aws:iam::916058994973:saml-provider/AWSSSO_75af594f75713858_DO_NOT_DELETE
+            Action: sts:AssumeRole,
+            Condition: {
+               StringEquals: {
+                  "SAML:aud": "https://signin.aws.amazon.com/saml"
+                  }
+            }
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AIOpsReadOnlyAccess
+
+  StackSet:
+    Type: AWS::CloudFormation::StackSet
+    Properties:
+      StackSetName: SocSupportReadonlyRoleStackSet
+      AdministrationRoleARN: arn:aws:iam::916058994973:role/aws-service-role/stacksets.cloudformation.amazonaws.com/AWSServiceRoleForCloudFormationStackSetsOrgAdmin
+      Parameters: []
+      TemplateBody: !Sub |
+        ---
+        AWSTemplateFormatVersion: 2010-09-09
+        Resources:
+          SubAccountRole:
+            Type: AWS::IAM::Role
+            Properties:
+              RoleName: soc-support-readonly
+              AssumeRolePolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                  - Effect: Allow
+                    Principal:
+                      Federated: arn:aws:iam::916058994973:saml-provider/AWSSSO_75af594f75713858_DO_NOT_DELETE
+                    Action: sts:AssumeRole,
+                    Condition: {
+                       StringEquals: {
+                          "SAML:aud": "https://signin.aws.amazon.com/saml"
+                          }
+                    }
+              ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/AIOpsReadOnlyAccess
+      PermissionModel: SERVICE_MANAGED
